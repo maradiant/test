@@ -28,10 +28,14 @@ dev = ["pytest>=7.4.0"]
 
 [project.scripts]
 marvin = "marvin.cli:main"
+marvin-web = "marvin.web.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["marvin*"]
+
+[tool.setuptools.package-data]
+"marvin.web" = ["static/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

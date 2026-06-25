@@ -84,6 +84,7 @@ updates the live `PostureState`, and writes an `AuditEvent`.
 | `marvin/audit/logger.py` | `AuditLogger` | Write structured JSONL + console audit trail of every decision. |
 | `marvin/simulation/runner.py` | `SimulationRunner` | Run normal / seeded / scenario / multi-session simulations. |
 | `marvin/cli.py` | — | Command-line entry point (`python -m marvin ...`). |
+| `marvin/web/` | `MarvinHandler` | Zero-dependency web preview: JSON API + single-page UI (`python -m marvin.web`). |
 | `marvin/domain/models.py`, `enums.py` | dataclasses / enums | Strongly-typed shared models and vocabulary. |
 
 ---
@@ -154,10 +155,35 @@ MARVIN detects rising risk, explains it, escalates the crypto policy, rotates
 
 ---
 
-## Optional dashboard
+## Web preview app (zero dependencies)
 
-A lightweight [Streamlit](https://streamlit.io) dashboard visualises risk over
-time, policy selection over time, key rotations, and the audit trail:
+A self-contained web app — **no third-party packages required** — lets you run
+simulations from the browser and watch the adaptive lifecycle unfold. It uses
+only the Python standard library and serves the same `SimulationRunner` the CLI
+uses behind a small JSON API.
+
+```bash
+python -m marvin.web            # then open http://127.0.0.1:8000
+python -m marvin.web --open     # also opens your browser automatically
+python -m marvin.web --port 9000
+# (after `pip install -e .` you can also run: marvin-web --open)
+```
+
+The page provides a scenario picker, tick/seed controls, a risk-over-time chart,
+a per-tick decision timeline with expandable explanations, key-rotation
+indicators, and the raw structured audit trail.
+
+API endpoints (handy for integration / testing):
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/scenarios` | List scenarios + descriptions. |
+| `POST` | `/api/simulate` | Run a session. Body: `{"scenario": ..., "ticks": 12, "seed": 7}`. |
+
+## Optional Streamlit dashboard
+
+If you prefer [Streamlit](https://streamlit.io), an alternative dashboard
+visualises risk over time, policy selection, key rotations, and the audit trail:
 
 ```bash
 pip install -e ".[dashboard]"

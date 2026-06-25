@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MARVIN — Adaptive Cybersecurity Simulation</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;🛡️&lt;/text&gt;&lt;/svg&gt;" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">◈</span>
+      <div>
+        <h1>MARVIN</h1>
+        <p class="tagline">Modular Adaptive Reasoning, Vision &amp; Intelligence Nucleus</p>
+      </div>
+    </div>
+    <div class="disclaimer">
+      Simulation only — not production quantum cryptography, QKD hardware, or
+      regulated security infrastructure.
+    </div>
+  </header>
+
+  <main>
+    <section class="controls card">
+      <div class="control">
+        <label for="scenario">Scenario</label>
+        <select id="scenario"></select>
+        <p id="scenario-desc" class="hint"></p>
+      </div>
+      <div class="control">
+        <label for="ticks">Ticks: <span id="ticks-val">12</span></label>
+        <input type="range" id="ticks" min="3" max="60" value="12" />
+      </div>
+      <div class="control">
+        <label for="seed">Seed (blank = random)</label>
+        <input type="number" id="seed" placeholder="e.g. 7" value="7" />
+      </div>
+      <div class="control run">
+        <button id="run-btn">▶ Run simulation</button>
+      </div>
+    </section>
+
+    <section id="results" class="hidden">
+      <div class="summary-grid">
+        <div class="card stat"><span class="stat-label">Session</span><span id="s-session" class="stat-val mono"></span></div>
+        <div class="card stat"><span class="stat-label">Scenario</span><span id="s-scenario" class="stat-val"></span></div>
+        <div class="card stat"><span class="stat-label">Ticks</span><span id="s-ticks" class="stat-val"></span></div>
+        <div class="card stat"><span class="stat-label">Peak risk</span><span id="s-peak" class="stat-val"></span></div>
+        <div class="card stat"><span class="stat-label">Key rotations</span><span id="s-rotations" class="stat-val"></span></div>
+        <div class="card stat"><span class="stat-label">Quarantined</span><span id="s-quarantine" class="stat-val"></span></div>
+      </div>
+
+      <div class="card">
+        <h2>Risk over time</h2>
+        <div id="chart"></div>
+        <div class="legend">
+          <span><i class="dot low"></i>LOW</span>
+          <span><i class="dot medium"></i>MEDIUM</span>
+          <span><i class="dot high"></i>HIGH</span>
+          <span><i class="dot critical"></i>CRITICAL</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Decision timeline</h2>
+        <div class="table-wrap">
+          <table id="timeline">
+            <thead>
+              <tr>
+                <th>Tick</th><th>Risk</th><th>Score</th><th>Policy</th>
+                <th>Key action</th><th>Next action</th><th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Audit trail <span class="hint">(structured JSON, one event per decision)</span></h2>
+        <button id="toggle-audit" class="ghost">Show raw audit JSON</button>
+        <pre id="audit" class="hidden mono"></pre>
+      </div>
+    </section>
+
+    <section id="error" class="card error hidden"></section>
+  </main>
+
+  <footer>
+    <span>Lifecycle: Observe → Score → Reason → Select Policy → Rotate Keys → Apply Posture → Log Decision</span>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
