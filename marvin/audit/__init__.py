@@ -1,0 +1,1 @@
+"""Structured, auditable decision logging."""
