@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "marvin"
+version = "0.1.0"
+description = "MARVIN — Modular Adaptive Reasoning, Vision, and Intelligence Nucleus. An adaptive cybersecurity simulation prototype for AI-driven cryptographic orchestration."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "MARVIN Project" }]
+keywords = [
+    "cybersecurity",
+    "simulation",
+    "moving-target-defense",
+    "cryptography",
+    "ai",
+    "risk-scoring",
+]
+dependencies = [
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+dashboard = ["streamlit>=1.30.0", "pandas>=2.0.0"]
+dev = ["pytest>=7.4.0"]
+# Real model-advisor backends. Entirely optional: the council runs fully
+# offline (deterministic personas) without any of these installed.
+advisors = ["openai>=1.30.0", "google-genai>=0.3.0", "anthropic>=0.30.0"]
+
+[project.scripts]
+marvin = "marvin.cli:main"
+marvin-web = "marvin.web.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["marvin*"]
+
+[tool.setuptools.package-data]
+"marvin.web" = ["static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
