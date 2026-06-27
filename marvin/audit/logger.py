@@ -63,6 +63,7 @@ class AuditLogger:
         key_event: KeyRotationEvent,
         posture: PostureState,
         explanation: str,
+        council: Optional[dict] = None,
     ) -> AuditEvent:
         """Build, store, and emit a single audit event."""
         event = AuditEvent(
@@ -76,6 +77,7 @@ class AuditLogger:
             key_rotation_event=key_event.to_dict(),
             posture_state=posture.to_dict(),
             explanation=explanation,
+            council=council,
         )
         self._events.append(event)
 

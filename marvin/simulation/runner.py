@@ -17,6 +17,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Optional
 
+from ..advisors.council import SecurityCouncil
 from ..audit.logger import AuditLogger
 from ..domain.enums import Scenario
 from ..domain.models import SecurityDecisionSnapshot
@@ -36,6 +37,7 @@ class SessionResult:
     seed: Optional[int]
     snapshots: list[SecurityDecisionSnapshot] = field(default_factory=list)
     audit_logger: Optional[AuditLogger] = None
+    council: bool = False
 
     @property
     def ticks(self) -> int:
@@ -53,8 +55,13 @@ class SimulationRunner:
         session_id: Optional[str] = None,
         jsonl_path: Optional[str] = None,
         echo_console: bool = False,
+        council: bool = False,
     ) -> SessionResult:
-        """Run a single session and return its :class:`SessionResult`."""
+        """Run a single session and return its :class:`SessionResult`.
+
+        When ``council`` is True, the session is governed by the offline
+        multi-model security council instead of the single deterministic engine.
+        """
         session_id = session_id or f"sess-{uuid.uuid4().hex[:8]}"
 
         # Derive independent-but-reproducible seeds for telemetry vs entropy.
@@ -70,6 +77,7 @@ class SimulationRunner:
             session_id=session_id,
             entropy_provider=entropy,
             audit_logger=audit,
+            council=SecurityCouncil.default() if council else None,
         )
 
         result = SessionResult(
@@ -77,6 +85,7 @@ class SimulationRunner:
             scenario=scenario,
             seed=seed,
             audit_logger=audit,
+            council=council,
         )
         for _ in range(ticks):
             telemetry = simulator.next()

@@ -14,10 +14,13 @@ from enum import Enum
 from typing import Any, Optional
 
 from .enums import (
+    AdvisorVendor,
+    AuditSeverity,
     CryptoPolicyName,
     DataSensitivity,
     EncryptionFamily,
     KeyStatus,
+    RecommendationSource,
     RecommendedAction,
     RiskLevel,
 )
@@ -39,6 +42,11 @@ def _serialise(value: Any) -> Any:
     if isinstance(value, (list, tuple)):
         return [_serialise(v) for v in value]
     return value
+
+
+def to_jsonable(value: Any) -> Any:
+    """Public helper to convert arbitrary values into JSON-friendly primitives."""
+    return _serialise(value)
 
 
 @dataclass(slots=True)
@@ -181,6 +189,8 @@ class SecurityDecisionSnapshot:
     posture_state: PostureState
     explanation: str
     next_action: str
+    # Present only when the multi-model security council governed this tick.
+    council_summary: Optional[dict[str, Any]] = None
 
     def to_dict(self) -> dict[str, Any]:
         return _serialise(asdict(self))
@@ -200,6 +210,151 @@ class AuditEvent:
     key_rotation_event: dict[str, Any]
     posture_state: dict[str, Any]
     explanation: str
+    # Full council deliberation (advisor recommendations, consensus, governance)
+    # when the multi-model council governed this decision; otherwise None.
+    council: Optional[dict[str, Any]] = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return _serialise(asdict(self))
+
+
+# --------------------------------------------------------------------------- #
+# Multi-model security council models                                         #
+# --------------------------------------------------------------------------- #
+
+
+@dataclass(slots=True)
+class AdvisorContext:
+    """The controlled, normalized facts presented identically to every advisor.
+
+    Advisors review *the same* facts and MARVIN's deterministic baseline, then
+    return an independent structured opinion. ``telemetry`` is retained for the
+    offline/simulated advisors that re-derive their own score; ``facts`` is the
+    presentation dict shown in audit logs.
+    """
+
+    session_id: str
+    facts: dict[str, Any]
+    baseline_risk_level: RiskLevel
+    baseline_score: float
+    telemetry: "TelemetrySnapshot"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "session_id": self.session_id,
+            "facts": _serialise(self.facts),
+            "baseline_risk_level": self.baseline_risk_level.value,
+            "baseline_score": self.baseline_score,
+        }
+
+
+@dataclass(slots=True)
+class SecurityRecommendation:
+    """One advisor's structured opinion. Matches the shared council schema."""
+
+    risk_level: RiskLevel
+    recommended_policy: CryptoPolicyName
+    requires_key_rotation: bool
+    requires_reauthentication: bool
+    requires_quarantine: bool
+    reasoning_summary: str
+    confidence: float
+    # Provenance / governance metadata (not part of the model-facing schema).
+    advisor_name: str = "unknown"
+    vendor: AdvisorVendor = AdvisorVendor.MOCK
+    model_name: str = "n/a"
+    source: RecommendationSource = RecommendationSource.SIMULATED_OFFLINE
+    available: bool = True
+    error: Optional[str] = None
+    latency_ms: float = 0.0
+
+    def schema_dict(self) -> dict[str, Any]:
+        """The model-facing portion of the recommendation (the agreed schema)."""
+        return {
+            "risk_level": self.risk_level.value,
+            "recommended_policy": self.recommended_policy.value,
+            "requires_key_rotation": self.requires_key_rotation,
+            "requires_reauthentication": self.requires_reauthentication,
+            "requires_quarantine": self.requires_quarantine,
+            "reasoning_summary": self.reasoning_summary,
+            "confidence": self.confidence,
+        }
+
+    def to_dict(self) -> dict[str, Any]:
+        return _serialise(asdict(self))
+
+
+@dataclass(slots=True)
+class ConsensusReport:
+    """Aggregated view of all advisor recommendations."""
+
+    total_advisors: int
+    available_advisors: int
+    risk_level_votes: dict[str, int]
+    policy_votes: dict[str, int]
+    quarantine_votes: int
+    key_rotation_votes: int
+    reauthentication_votes: int
+    majority_risk_level: RiskLevel
+    max_risk_level: RiskLevel
+    escalation_risk_level: RiskLevel
+    highest_confidence_advisor: Optional[str]
+    mean_confidence: float
+    agreement_ratio: float
+
+    def to_dict(self) -> dict[str, Any]:
+        return _serialise(asdict(self))
+
+
+@dataclass(slots=True)
+class DisagreementReport:
+    """Where and how the advisors disagreed."""
+
+    has_disagreement: bool
+    risk_level_spread: int
+    quarantine_split: bool
+    outliers: list[str]
+    human_review_required: bool
+    notes: list[str]
+
+    def to_dict(self) -> dict[str, Any]:
+        return _serialise(asdict(self))
+
+
+@dataclass(slots=True)
+class GuardrailVerdict:
+    """Hard, deterministic constraints that override any model opinion."""
+
+    min_risk_level: RiskLevel
+    mandatory_quarantine: bool
+    quarantine_eligible: bool
+    forbid_no_action: bool
+    require_key_rotation: bool
+    require_reauthentication: bool
+    triggered_rules: list[str]
+
+    def to_dict(self) -> dict[str, Any]:
+        return _serialise(asdict(self))
+
+
+@dataclass(slots=True)
+class CouncilDecision:
+    """The final, governed MARVIN decision after weighing the council."""
+
+    session_id: str
+    final_risk_level: RiskLevel
+    final_policy: CryptoPolicyName
+    requires_key_rotation: bool
+    requires_reauthentication: bool
+    requires_quarantine: bool
+    audit_severity: AuditSeverity
+    conservative_action: bool
+    human_review_required: bool
+    explanation: str
+    recommendations: list[dict[str, Any]]
+    consensus: dict[str, Any]
+    disagreement: dict[str, Any]
+    guardrails: dict[str, Any]
 
     def to_dict(self) -> dict[str, Any]:
         return _serialise(asdict(self))

@@ -24,6 +24,16 @@ class RiskLevel(str, Enum):
         """Numeric ordering so risk levels can be compared / escalated."""
         return _RISK_ORDER[self]
 
+    def escalated(self, steps: int = 1) -> "RiskLevel":
+        """Return the risk level ``steps`` bands higher, clamped at CRITICAL."""
+        target = min(len(_RISK_BY_ORDER) - 1, max(0, self.order + steps))
+        return _RISK_BY_ORDER[target]
+
+    @staticmethod
+    def max(a: "RiskLevel", b: "RiskLevel") -> "RiskLevel":
+        """Return whichever risk level is more severe."""
+        return a if a.order >= b.order else b
+
 
 _RISK_ORDER: dict[RiskLevel, int] = {
     RiskLevel.LOW: 0,
@@ -31,6 +41,8 @@ _RISK_ORDER: dict[RiskLevel, int] = {
     RiskLevel.HIGH: 2,
     RiskLevel.CRITICAL: 3,
 }
+
+_RISK_BY_ORDER: dict[int, RiskLevel] = {v: k for k, v in _RISK_ORDER.items()}
 
 
 class RecommendedAction(str, Enum):
@@ -91,6 +103,7 @@ class DataSensitivity(str, Enum):
     INTERNAL = "INTERNAL"
     CONFIDENTIAL = "CONFIDENTIAL"
     RESTRICTED = "RESTRICTED"
+    MISSION_CRITICAL = "MISSION_CRITICAL"
 
     @property
     def weight(self) -> float:
@@ -98,9 +111,43 @@ class DataSensitivity(str, Enum):
         return _SENSITIVITY_WEIGHT[self]
 
 
+# RESTRICTED and MISSION_CRITICAL both saturate the weight at 1.0; the
+# distinction matters for governance guardrails, not for raw scoring.
 _SENSITIVITY_WEIGHT: dict[DataSensitivity, float] = {
     DataSensitivity.PUBLIC: 0.0,
     DataSensitivity.INTERNAL: 0.33,
     DataSensitivity.CONFIDENTIAL: 0.66,
     DataSensitivity.RESTRICTED: 1.0,
+    DataSensitivity.MISSION_CRITICAL: 1.0,
 }
+
+
+# Data classes that the multi-model security council layer revolves around.
+
+
+class AdvisorVendor(str, Enum):
+    """The independent reasoning engines that sit on the security council."""
+
+    OPENAI = "OPENAI"
+    GEMINI = "GEMINI"
+    LLAMA = "LLAMA"
+    CLAUDE = "CLAUDE"
+    MOCK = "MOCK"
+
+
+class RecommendationSource(str, Enum):
+    """Where an advisor's recommendation actually came from."""
+
+    SIMULATED_OFFLINE = "SIMULATED_OFFLINE"          # deterministic local persona
+    LIVE_API = "LIVE_API"                            # real model API call
+    LIVE_API_FALLBACK_OFFLINE = "LIVE_API_FALLBACK_OFFLINE"  # API failed → offline
+    STATIC_STUB = "STATIC_STUB"                      # preset value (tests)
+
+
+class AuditSeverity(str, Enum):
+    """Severity attached to a governed council decision for audit triage."""
+
+    INFO = "INFO"
+    NOTICE = "NOTICE"
+    WARNING = "WARNING"
+    CRITICAL = "CRITICAL"

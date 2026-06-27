@@ -82,6 +82,19 @@ _POLICY_TEMPLATES: dict[CryptoPolicyName, dict] = {
 class CryptoPolicyEngine:
     """Choose a :class:`CryptoPolicyDecision` from risk and telemetry."""
 
+    def decision_for(
+        self,
+        policy_name: CryptoPolicyName,
+        telemetry: TelemetrySnapshot,
+        rationale: list[str] | None = None,
+    ) -> CryptoPolicyDecision:
+        """Build a full :class:`CryptoPolicyDecision` for an explicitly chosen policy.
+
+        Used by the governed council pipeline, where the final policy *name* is
+        decided deterministically and we just need the concrete policy fields.
+        """
+        return self._build_decision(policy_name, telemetry, list(rationale or []))
+
     def select(
         self, threat: ThreatScore, telemetry: TelemetrySnapshot
     ) -> CryptoPolicyDecision:
