@@ -72,10 +72,35 @@ main { max-width: 1100px; margin: 0 auto; padding: 28px 24px 80px; }
 
 .controls {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 0.8fr auto;
+  grid-template-columns: 1.3fr 1fr 0.8fr 1.2fr auto;
   gap: 22px;
   align-items: end;
 }
+.switch-label {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  color: var(--text) !important;
+  cursor: pointer;
+}
+.switch-label input { width: auto; accent-color: var(--accent-2); }
+.council-toggle .hint { margin-top: 6px; }
+
+.council-banner {
+  border-left: 4px solid var(--accent-2);
+  background: linear-gradient(180deg, #1a2150 0%, var(--bg-soft) 100%);
+}
+.council-banner h3 { margin: 0 0 8px; font-size: 15px; }
+.council-banner .advisor-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.chip {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-family: "SFMono-Regular", "Consolas", monospace;
+}
+.review-flag { color: var(--high); font-weight: 700; }
+.council-cell { font-family: "SFMono-Regular", "Consolas", monospace; font-size: 12px; }
 .control label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
 .hint { color: var(--muted); font-size: 12px; margin: 6px 0 0; }
 

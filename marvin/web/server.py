@@ -60,6 +60,7 @@ def build_session_payload(result: SessionResult) -> dict[str, Any]:
                 "reauth": snap.posture_state.reauthentication_required,
                 "next_action": snap.next_action,
                 "explanation": snap.explanation,
+                "council": snap.council_summary,
             }
         )
     audit = result.audit_logger.export() if result.audit_logger else []
@@ -68,6 +69,7 @@ def build_session_payload(result: SessionResult) -> dict[str, Any]:
         "scenario": result.scenario.value,
         "seed": result.seed,
         "ticks": result.ticks,
+        "council": result.council,
         "decisions": decisions,
         "audit": audit,
     }
@@ -163,8 +165,12 @@ class MarvinHandler(BaseHTTPRequestHandler):
             except (TypeError, ValueError):
                 raise ValueError("seed must be an integer")
 
+        council = bool(data.get("council", False))
+
         runner = SimulationRunner()
-        result = runner.run_session(scenario=scenario, ticks=ticks, seed=seed)
+        result = runner.run_session(
+            scenario=scenario, ticks=ticks, seed=seed, council=council
+        )
         return build_session_payload(result)
 
 

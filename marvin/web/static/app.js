@@ -18,6 +18,9 @@ const els = {
   ticks: document.getElementById("ticks"),
   ticksVal: document.getElementById("ticks-val"),
   seed: document.getElementById("seed"),
+  council: document.getElementById("council"),
+  councilBanner: document.getElementById("council-banner"),
+  councilCol: document.getElementById("council-col"),
   runBtn: document.getElementById("run-btn"),
   results: document.getElementById("results"),
   error: document.getElementById("error"),
@@ -71,6 +74,7 @@ async function runSimulation() {
       scenario: els.scenario.value,
       ticks: parseInt(els.ticks.value, 10),
       seed: els.seed.value === "" ? null : parseInt(els.seed.value, 10),
+      council: els.council.checked,
     };
     const res = await fetch("/api/simulate", {
       method: "POST",
@@ -109,9 +113,35 @@ function render(data) {
     ? `<span class="badge critical">YES</span>`
     : `<span class="badge low">NO</span>`;
 
+  renderCouncilBanner(data);
   drawChart(decisions);
-  drawTimeline(decisions);
+  drawTimeline(decisions, !!data.council);
   els.audit.textContent = JSON.stringify(data.audit, null, 2);
+}
+
+function renderCouncilBanner(data) {
+  const on = !!data.council;
+  els.councilCol.classList.toggle("hidden", !on);
+  if (!on) {
+    els.councilBanner.classList.add("hidden");
+    return;
+  }
+  const decisions = data.decisions;
+  const reviews = decisions.filter((d) => d.council && d.council.human_review_required).length;
+  const guardrails = new Set();
+  decisions.forEach((d) => (d.council?.triggered_guardrails || []).forEach((g) => guardrails.add(g)));
+  const advisors = (decisions[0] && decisions[0].council && decisions[0].council.advisors) || [];
+  const chips = advisors
+    .map((a) => `<span class="chip">${a.name}: ${a.risk_level}${a.requires_quarantine ? " ⚠Q" : ""}</span>`)
+    .join("");
+  els.councilBanner.innerHTML = `
+    <h3>Multi-model security council active — LLMs advise, MARVIN governs</h3>
+    <div>Independent advisors review identical telemetry; a deterministic governance
+    engine makes every final decision. Ticks flagged for human review:
+    <strong class="${reviews ? "review-flag" : ""}">${reviews}</strong>.
+    Guardrails triggered: <strong>${[...guardrails].join(", ") || "none"}</strong>.</div>
+    <div class="advisor-chips">${chips}</div>`;
+  els.councilBanner.classList.remove("hidden");
 }
 
 function badge(level) {
@@ -176,8 +206,9 @@ function drawChart(decisions) {
     </svg>`;
 }
 
-function drawTimeline(decisions) {
+function drawTimeline(decisions, withCouncil) {
   els.timelineBody.innerHTML = "";
+  const colspan = withCouncil ? 8 : 7;
   decisions.forEach((d) => {
     const tr = document.createElement("tr");
     const keyClass =
@@ -186,22 +217,27 @@ function drawTimeline(decisions) {
         : d.key_action === "rotate"
         ? "key-rotate"
         : "key-hold";
+    const councilCell = withCouncil
+      ? `<td class="council-cell">${councilSummaryText(d.council)}</td>`
+      : "";
     tr.innerHTML = `
       <td>${d.tick}</td>
       <td>${badge(d.risk_level)}</td>
       <td>${d.risk_score.toFixed(2)}</td>
       <td class="policy">${d.policy}</td>
       <td class="${keyClass}">${d.key_action}</td>
+      ${councilCell}
       <td>${d.next_action}</td>
       <td><button class="expand-btn" title="Explain">+</button></td>`;
     const detail = document.createElement("tr");
     detail.className = "detail hidden";
-    detail.innerHTML = `<td colspan="7">
+    detail.innerHTML = `<td colspan="${colspan}">
       <strong>Telemetry:</strong> ${escapeHtml(d.telemetry_summary)}<br/>
       <strong>Why:</strong> ${escapeHtml(d.explanation)}<br/>
       <strong>Keys:</strong> ${escapeHtml(d.key_reason)}
       ${d.active_key_id ? ` &nbsp;|&nbsp; <span class="mono">active=${d.active_key_id}</span>` : ""}
       ${d.reauth ? ` &nbsp;|&nbsp; <strong>reauth required</strong>` : ""}
+      ${councilDetail(d.council)}
     </td>`;
     tr.querySelector(".expand-btn").addEventListener("click", (e) => {
       const open = detail.classList.toggle("hidden");
@@ -210,6 +246,32 @@ function drawTimeline(decisions) {
     els.timelineBody.appendChild(tr);
     els.timelineBody.appendChild(detail);
   });
+}
+
+function councilSummaryText(council) {
+  if (!council) return "-";
+  const votes = council.risk_level_votes || {};
+  const v = Object.entries(votes)
+    .map(([k, n]) => `${k.slice(0, 4)}:${n}`)
+    .join(" ");
+  const flags = [];
+  if (council.quarantine_votes) flags.push(`Q${council.quarantine_votes}`);
+  if (council.human_review_required) flags.push("REVIEW");
+  return `${v}${flags.length ? " " + flags.join(" ") : ""}`;
+}
+
+function councilDetail(council) {
+  if (!council) return "";
+  const advisors = (council.advisors || [])
+    .map(
+      (a) =>
+        `${a.name}=${a.risk_level}${a.requires_quarantine ? "(Q)" : ""}@${a.confidence}`
+    )
+    .join(", ");
+  const guardrails = (council.triggered_guardrails || []).join(", ") || "none";
+  return `<br/><strong>Council:</strong> ${escapeHtml(advisors)}
+    &nbsp;|&nbsp; guardrails: ${escapeHtml(guardrails)}
+    &nbsp;|&nbsp; severity: ${escapeHtml(council.audit_severity || "-")}`;
 }
 
 function escapeHtml(s) {

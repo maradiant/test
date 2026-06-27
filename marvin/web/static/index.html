@@ -37,12 +37,20 @@
         <label for="seed">Seed (blank = random)</label>
         <input type="number" id="seed" placeholder="e.g. 7" value="7" />
       </div>
+      <div class="control council-toggle">
+        <label class="switch-label">
+          <input type="checkbox" id="council" />
+          <span>Convene multi-model security council</span>
+        </label>
+        <p class="hint">OpenAI · Gemini · Llama · Claude advise; MARVIN governs.</p>
+      </div>
       <div class="control run">
         <button id="run-btn">▶ Run simulation</button>
       </div>
     </section>
 
     <section id="results" class="hidden">
+      <div id="council-banner" class="card council-banner hidden"></div>
       <div class="summary-grid">
         <div class="card stat"><span class="stat-label">Session</span><span id="s-session" class="stat-val mono"></span></div>
         <div class="card stat"><span class="stat-label">Scenario</span><span id="s-scenario" class="stat-val"></span></div>
@@ -70,7 +78,8 @@
             <thead>
               <tr>
                 <th>Tick</th><th>Risk</th><th>Score</th><th>Policy</th>
-                <th>Key action</th><th>Next action</th><th></th>
+                <th>Key action</th><th id="council-col" class="hidden">Council</th>
+                <th>Next action</th><th></th>
               </tr>
             </thead>
             <tbody></tbody>
