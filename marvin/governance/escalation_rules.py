@@ -50,9 +50,11 @@ def compute_audit_severity(
     """Derive audit severity from the final risk and decision context."""
     severity = AUDIT_SEVERITY_BY_RISK[risk_level]
     if requires_quarantine:
-        severity = AuditSeverity.CRITICAL
-    if human_review_required and severity is AuditSeverity.INFO:
-        severity = AuditSeverity.NOTICE
-    if human_review_required and severity is AuditSeverity.NOTICE:
-        severity = AuditSeverity.WARNING
+        return AuditSeverity.CRITICAL
+    # Human review nudges severity up exactly one band (never past WARNING here).
+    if human_review_required:
+        if severity is AuditSeverity.INFO:
+            severity = AuditSeverity.NOTICE
+        elif severity is AuditSeverity.NOTICE:
+            severity = AuditSeverity.WARNING
     return severity
