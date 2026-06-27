@@ -117,3 +117,27 @@ class ThreatTelemetrySimulator:
 
 def _clamp01(value: float) -> float:
     return max(0.0, min(1.0, value))
+
+
+def canonical_interception_event(session_id: str = "demo-interception") -> TelemetrySnapshot:
+    """The canonical 'suspected interception' event used in council demos.
+
+    Hand-tuned so MARVIN's deterministic baseline lands at HIGH while the
+    conservative advisors escalate to CRITICAL — producing the textbook
+    split-council narrative (two escalate, two quarantine).
+    """
+    return TelemetrySnapshot(
+        session_id=session_id,
+        timestamp=utc_now(),
+        network_latency_ms=90.0,
+        packet_loss_percent=4.0,
+        anomaly_score=0.40,
+        endpoint_trust_score=0.42,
+        failed_auth_attempts=9,
+        geo_velocity_risk=0.87,
+        data_sensitivity=DataSensitivity.RESTRICTED,
+        suspected_interception=True,
+        traffic_volume=10.0,
+        adversary_pressure=0.50,
+        previous_incident_count=1,
+    )
