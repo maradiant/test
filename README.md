@@ -70,6 +70,45 @@ updates the live `PostureState`, and writes an `AuditEvent`.
 
 ---
 
+## Multi-model security council (LLMs advise, MARVIN governs)
+
+On top of the single deterministic engine, MARVIN can convene a **security
+council** of independent reasoning engines — OpenAI, Gemini, Llama/Meta, and
+(optionally) Claude/Mythos. Each advisor reviews the *same* controlled telemetry
+and returns the *same* structured recommendation schema. A deterministic
+consensus + governance + decision pipeline — **never the models** — selects the
+final action.
+
+```
+Telemetry → Normalizer → Multi-Model Council → Consensus + Disagreement
+          → Policy Guardrails → Final Decision Engine → Action + Audit
+```
+
+Design guarantees:
+
+- **Guardrails are absolute** and evaluated purely from telemetry (e.g. suspected
+  interception on restricted data forbids inaction; collapsed trust under heavy
+  pressure mandates quarantine).
+- **The deterministic baseline is the floor** — models can never lower risk below
+  MARVIN's own transparent score.
+- **The council may escalate, not weaken** — and only with ≥ 2 supporting advisors,
+  so no lone model drives an action (a lone alarmist instead triggers human review).
+- **Conservative on disagreement** — splits take the safer action and flag review.
+- **Offline by default** — every advisor ships a deterministic persona, so the
+  whole council (and the test-suite) runs with no network calls. Real APIs are
+  opt-in via `--online` / env vars and degrade gracefully if unavailable.
+
+```bash
+# Convene the council on a single event (the headline scenario):
+python -m marvin council --demo
+
+# Govern a whole session with the council:
+python -m marvin simulate --scenario SUSPECTED_INTERCEPTION --ticks 12 --seed 7 --council
+```
+
+See [`docs/security_council.md`](docs/security_council.md) for the full design,
+the advisor table, and the worked boardroom example.
+
 ## Module responsibility table
 
 | Module | Class | Responsibility |
@@ -85,6 +124,11 @@ updates the live `PostureState`, and writes an `AuditEvent`.
 | `marvin/simulation/runner.py` | `SimulationRunner` | Run normal / seeded / scenario / multi-session simulations. |
 | `marvin/cli.py` | — | Command-line entry point (`python -m marvin ...`). |
 | `marvin/web/` | `MarvinHandler` | Zero-dependency web preview: JSON API + single-page UI (`python -m marvin.web`). |
+| `marvin/advisors/` | `SecurityAdvisor`, `SecurityCouncil` | Independent OpenAI/Gemini/Llama/Claude advisors (offline personas + optional live APIs). |
+| `marvin/consensus/recommendation_aggregator.py` | `RecommendationAggregator` | Tally advisor votes into a consensus view. |
+| `marvin/consensus/disagreement_detector.py` | `DisagreementDetector` | Surface divergence and decide when humans must review. |
+| `marvin/governance/policy_guardrails.py` | `PolicyGuardrails` | Deterministic hard rules that override any model opinion. |
+| `marvin/consensus/final_decision_engine.py` | `FinalDecisionEngine` | The governed authority: baseline + council + guardrails → final decision. |
 | `marvin/domain/models.py`, `enums.py` | dataclasses / enums | Strongly-typed shared models and vocabulary. |
 
 ---
@@ -123,6 +167,13 @@ python -m marvin multi --sessions 4 --ticks 8 --seed 10
 
 # List available scenarios
 python -m marvin scenarios
+
+# Convene the multi-model security council on a single event
+python -m marvin council --demo
+python -m marvin council --scenario CRITICAL_ATTACK_CHAIN --seed 42
+
+# Govern a full session with the council
+python -m marvin simulate --scenario SUSPECTED_INTERCEPTION --ticks 12 --seed 7 --council
 ```
 
 Each tick shows: tick number, threat level, telemetry highlights, selected
@@ -238,6 +289,7 @@ See [`docs/patent_demo_notes.md`](docs/patent_demo_notes.md) for the full write-
 ## Documentation
 
 - [`docs/architecture.md`](docs/architecture.md) — component and data-flow detail.
+- [`docs/security_council.md`](docs/security_council.md) — multi-model council design and governance.
 - [`docs/patent_demo_notes.md`](docs/patent_demo_notes.md) — demonstration value and extension points.
 - [`docs/threat_model.md`](docs/threat_model.md) — simulated threats, scenarios, and scope.
 

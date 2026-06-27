@@ -47,6 +47,24 @@ expiry; rotation intervals tighten as risk rises; entropy-driven jitter varies
 the rotation cadence; and high-risk sessions can be quarantined. The result is a
 continuously shifting attack surface — the essence of moving-target defense.
 
+### 6. Governed multi-model security council
+MARVIN can convene several *independent* reasoning engines (OpenAI, Gemini,
+Llama/Meta, optionally Claude/Mythos) as advisors that review identical
+telemetry and return a shared structured recommendation schema. A deterministic
+consensus + governance + decision pipeline then:
+
+- measures agreement and **disagreement** across the models,
+- applies **hard guardrails** that no model can override,
+- escalates only with multi-advisor support (no lone model drives an action),
+- takes the **conservative** path on splits and flags **human review**, and
+- records every advisor opinion and the governed outcome in the audit log.
+
+The defensible thesis — *"LLMs advise; MARVIN governs"* — is the differentiator:
+several independent reasoning engines interpret ambiguity while a transparent,
+testable policy core retains final authority. See
+[`security_council.md`](security_council.md) for the worked example and the
+claims-surface discussion.
+
 ## Illustrative claims surface (for discussion, not legal text)
 
 The prototype concretely exercises ideas such as:
@@ -74,6 +92,8 @@ The prototype concretely exercises ideas such as:
 | `AuditLogger` JSONL | Streaming to a real **SIEM** (Splunk, Elastic, Sentinel). |
 | `requires_reauthentication` flag | Step-up auth via a **zero-trust identity** provider. |
 | Weighted-sum scorer | A **learned risk model** retaining explainability. |
+| Offline advisor personas | Live **OpenAI / Gemini / Llama / Anthropic** APIs (structured outputs). |
+| Scripted telemetry | Real **SIEM / EDR / IAM / cloud** log ingestion into the normalizer. |
 
 ## How to run the demonstration
 
